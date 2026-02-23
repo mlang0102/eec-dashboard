@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>EEC Operations Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0d1f35;
+    --navy-mid: #162d47;
+    --blue: #12497f;
+    --blue-light: #1a6ab5;
+    --gold: #b79d6d;
+    --gold-light: #d4b97e;
+    --cream: #f5f1eb;
+    --white: #ffffff;
+    --gray-50: #f8f9fa;
+    --gray-100: #f0f2f5;
+    --gray-200: #e2e6ea;
+    --gray-400: #9aa5b4;
+    --gray-600: #6b7280;
+    --gray-800: #2d3748;
+    --red: #c0392b;
+    --red-light: #fee2e0;
+    --orange: #d97706;
+    --orange-light: #fef3c7;
+    --green: #16a34a;
+    --green-light: #dcfce7;
+    --text: #1a2332;
+    --sidebar-w: 240px;
+    --header-h: 64px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--gray-50);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── HEADER ─────────────────────────────────────── */
+  .header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    height: var(--header-h);
+    background: var(--navy);
+    display: flex; align-items: center;
+    padding: 0 24px;
+    border-bottom: 2px solid var(--gold);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+  }
+  .header-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--white);
+    letter-spacing: 0.02em;
+    flex: 1;
+  }
+  .header-logo span { color: var(--gold); }
+  .header-date {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--gray-400);
+    letter-spacing: 0.08em;
+  }
+  .header-badge {
+    margin-left: 16px;
+    background: var(--blue);
+    color: var(--white);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── LAYOUT ─────────────────────────────────────── */
+  .layout { display: flex; padding-top: var(--header-h); min-height: 100vh; }
+
+  /* ── SIDEBAR ─────────────────────────────────────── */
+  .sidebar {
+    width: var(--sidebar-w);
+    position: fixed; top: var(--header-h); left: 0; bottom: 0;
+    background: var(--navy-mid);
+    padding: 24px 0;
+    overflow-y: auto;
+    z-index: 50;
+    border-right: 1px solid rgba(183,157,109,0.2);
+  }
+  .sidebar-section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--gray-400);
+    padding: 0 20px;
+    margin-bottom: 6px;
+    margin-top: 20px;
+    text-transform: uppercase;
+  }
+  .sidebar-section-label:first-child { margin-top: 0; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 20px;
+    cursor: pointer;
+    color: #8fa5c0;
+    font-size: 14px;
+    font-weight: 400;
+    transition: all 0.15s;
+    border-left: 3px solid transparent;
+    user-select: none;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--white); }
+  .nav-item.active {
+    background: rgba(18,73,127,0.3);
+    color: var(--white);
+    border-left-color: var(--gold);
+    font-weight: 600;
+  }
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+  .nav-badge {
+    margin-left: auto;
+    background: var(--red);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+  }
+  .nav-badge.orange { background: var(--orange); }
+  .nav-badge.blue { background: var(--blue-light); }
+
+  /* ── MAIN ─────────────────────────────────────── */
+  .main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    padding: 32px;
+    max-width: 1300px;
+  }
+
+  /* ── PAGE HEADER ─────────────────────────────────── */
+  .page-header {
+    margin-bottom: 28px;
+    display: flex; align-items: flex-end; justify-content: space-between;
+  }
+  .page-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 32px;
+    color: var(--navy);
+    line-height: 1.1;
+  }
+  .page-subtitle { font-size: 13px; color: var(--gray-600); margin-top: 4px; font-weight: 400; }
+
+  /* ── PANEL / CARD ─────────────────────────────────── */
+  .panel {
+    background: var(--white);
+    border-radius: 12px;
+    border: 1px solid var(--gray-200);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--gray-200);
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--gray-50);
+  }
+  .panel-title {
+    font-size: 13px; font-weight: 700;
+    color: var(--navy);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-family: 'DM Mono', monospace;
+  }
+  .panel-body { padding: 0; }
+
+  /* ── STATS ROW ─────────────────────────────────── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--white);
+    border-radius: 12px;
+    border: 1px solid var(--gray-200);
+    padding: 20px 24px;
+    display: flex; flex-direction: column; gap: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+  .stat-card.red::before { background: var(--red); }
+  .stat-card.orange::before { background: var(--orange); }
+  .stat-card.blue::before { background: var(--blue); }
+  .stat-card.gold::before { background: var(--gold); }
+  .stat-card.green::before { background: var(--green); }
+  .stat-label { font-size: 11px; color: var(--gray-600); font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; }
+  .stat-value { font-family: 'DM Serif Display', serif; font-size: 36px; color: var(--navy); line-height: 1; }
+  .stat-sub { font-size: 12px; color: var(--gray-400); }
+
+  /* ── GRID ─────────────────────────────────── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  @media (max-width: 1100px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+  /* ── ITEMS ─────────────────────────────────── */
+  .item-list { list-style: none; }
+  .item {
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--gray-100);
+    display: flex; align-items: flex-start; gap: 12px;
+    transition: background 0.1s;
+  }
+  .item:last-child { border-bottom: none; }
+  .item:hover { background: var(--gray-50); }
+  .item-icon {
+    width: 34px; height: 34px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0; margin-top: 1px;
+  }
+  .item-icon.red { background: var(--red-light); }
+  .item-icon.orange { background: var(--orange-light); }
+  .item-icon.blue { background: #dbeafe; }
+  .item-icon.gold { background: #fef9ee; }
+  .item-icon.green { background: var(--green-light); }
+  .item-icon.gray { background: var(--gray-100); }
+  .item-body { flex: 1; min-width: 0; }
+  .item-title { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item-meta { font-size: 12px; color: var(--gray-600); margin-top: 2px; }
+  .item-actions { display: flex; gap: 6px; align-items: flex-start; flex-shrink: 0; }
+
+  /* ── BADGES ─────────────────────────────────── */
+  .badge {
+    font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px;
+    letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap;
+    font-family: 'DM Mono', monospace;
+  }
+  .badge.red { background: var(--red-light); color: var(--red); }
+  .badge.orange { background: var(--orange-light); color: var(--orange); }
+  .badge.blue { background: #dbeafe; color: #1d4ed8; }
+  .badge.gold { background: #fef9ee; color: #92681a; }
+  .badge.green { background: var(--green-light); color: var(--green); }
+  .badge.gray { background: var(--gray-100); color: var(--gray-600); }
+  .badge.navy { background: #e8eef5; color: var(--navy); }
+
+  /* ── BUTTONS ─────────────────────────────────── */
+  .btn {
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px; font-weight: 600;
+    padding: 8px 16px; border-radius: 8px;
+    cursor: pointer; border: none; transition: all 0.15s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-primary { background: var(--blue); color: white; }
+  .btn-primary:hover { background: var(--blue-light); }
+  .btn-ghost { background: transparent; color: var(--gray-600); border: 1px solid var(--gray-200); }
+  .btn-ghost:hover { background: var(--gray-100); color: var(--text); }
+  .btn-sm { font-size: 11px; padding: 5px 10px; border-radius: 6px; }
+  .btn-danger { background: var(--red); color: white; }
+  .btn-danger:hover { background: #a93226; }
+  .btn-gold { background: var(--gold); color: white; }
+  .btn-gold:hover { background: var(--gold-light); }
+
+  /* ── FORM ─────────────────────────────────── */
+  .form-group { margin-bottom: 16px; }
+  .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--gray-800); margin-bottom: 6px; letter-spacing: 0.03em; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%; padding: 9px 12px;
+    font-family: 'Outfit', sans-serif; font-size: 14px;
+    border: 1px solid var(--gray-200); border-radius: 8px;
+    color: var(--text); background: var(--white);
+    transition: border-color 0.15s;
+    outline: none;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(18,73,127,0.1); }
+  .form-textarea { resize: vertical; min-height: 80px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* ── MODAL ─────────────────────────────────── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200; padding: 24px;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--white); border-radius: 16px;
+    width: 100%; max-width: 520px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.25);
+    transform: translateY(16px); transition: transform 0.2s;
+    overflow: hidden;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--gray-200);
+    background: var(--gray-50);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-title { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--navy); }
+  .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--gray-400); line-height: 1; padding: 4px; }
+  .modal-body { padding: 24px; }
+  .modal-footer { padding: 16px 24px; border-top: 1px solid var(--gray-200); display: flex; gap: 10px; justify-content: flex-end; }
+
+  /* ── TABLE ─────────────────────────────────── */
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left; padding: 12px 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; font-weight: 500;
+    color: var(--gray-600); letter-spacing: 0.08em; text-transform: uppercase;
+    border-bottom: 2px solid var(--gray-200);
+    background: var(--gray-50);
+  }
+  td { padding: 13px 16px; font-size: 13px; border-bottom: 1px solid var(--gray-100); color: var(--text); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--gray-50); }
+
+  /* ── PRIORITY DOT ─────────────────────────────────── */
+  .priority-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .priority-dot.high { background: var(--red); }
+  .priority-dot.medium { background: var(--orange); }
+  .priority-dot.low { background: var(--green); }
+
+  /* ── STATUS SELECT ─────────────────────────────────── */
+  .status-select {
+    font-size: 11px; font-weight: 700;
+    padding: 3px 8px; border-radius: 20px; border: none;
+    cursor: pointer; font-family: 'DM Mono', monospace;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    -webkit-appearance: none; appearance: none;
+  }
+  .status-select.open { background: var(--orange-light); color: var(--orange); }
+  .status-select.in-progress { background: #dbeafe; color: #1d4ed8; }
+  .status-select.complete { background: var(--green-light); color: var(--green); }
+  .status-select.blocked { background: var(--red-light); color: var(--red); }
+
+  /* ── PROGRESS BAR ─────────────────────────────────── */
+  .progress-bar { height: 6px; border-radius: 3px; background: var(--gray-200); overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--blue), var(--gold)); transition: width 0.3s; }
+
+  /* ── EMPTY STATE ─────────────────────────────────── */
+  .empty-state { text-align: center; padding: 48px 24px; color: var(--gray-400); }
+  .empty-state-icon { font-size: 36px; margin-bottom: 12px; }
+  .empty-state-text { font-size: 14px; }
+
+  /* ── TOAST ─────────────────────────────────── */
+  #toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 999;
+    background: var(--navy); color: white;
+    padding: 12px 20px; border-radius: 10px;
+    font-size: 13px; font-weight: 500;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    transform: translateY(80px); opacity: 0;
+    transition: all 0.25s; border-left: 4px solid var(--gold);
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+
+  /* ── DIVIDER ─────────────────────────────────── */
+  .divider { height: 1px; background: var(--gray-200); margin: 20px 0; }
+  .section-gap { margin-bottom: 24px; }
+
+  /* ── HOME GRID ─────────────────────────────── */
+  .home-cols { display: grid; grid-template-columns: 1.6fr 1fr; gap: 20px; }
+  @media (max-width: 1000px) { .home-cols { grid-template-columns: 1fr; } }
+
+  /* ── DEAL ROW ─────────────────────────────── */
+  .deal-row-status {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .deal-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ── CHECKBOX ─────────────────────────────── */
+  .checkbox-wrap { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .checkbox-wrap input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--blue); cursor: pointer; }
+
+  /* ── OVERDUE ─────────────────────────────── */
+  .overdue-text { color: var(--red); font-weight: 600; }
+
+  /* ── TABS ─────────────────────────────────── */
+  .tabs { display: flex; gap: 4px; padding: 4px; background: var(--gray-100); border-radius: 10px; margin-bottom: 20px; }
+  .tab { flex: 1; text-align: center; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--gray-600); transition: all 0.15s; user-select: none; }
+  .tab.active { background: white; color: var(--navy); font-weight: 700; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+  /* util */
+  .flex-between { display: flex; align-items: center; justify-content: space-between; }
+  .flex-gap { display: flex; align-items: center; gap: 10px; }
+  .text-sm { font-size: 12px; }
+  .text-muted { color: var(--gray-600); }
+  .mb-4 { margin-bottom: 16px; }
+  .mb-6 { margin-bottom: 24px; }
+  .fw-700 { font-weight: 700; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-logo">Excelsior <span>Energy Capital</span></div>
+  <div class="header-date" id="headerDate"></div>
+  <div class="header-badge">CFO OPS</div>
+</header>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-section-label">Overview</div>
+    <div class="nav-item active" onclick="showPage('home')" id="nav-home">
+      <span class="nav-icon">⚡</span> Daily Digest
+    </div>
+
+    <div class="sidebar-section-label">Tracking</div>
+    <div class="nav-item" onclick="showPage('todos')" id="nav-todos">
+      <span class="nav-icon">✓</span> My To-Do List
+      <span class="nav-badge" id="badge-todos">0</span>
+    </div>
+    <div class="nav-item" onclick="showPage('email')" id="nav-email">
+      <span class="nav-icon">✉</span> Email Follow-Ups
+      <span class="nav-badge orange" id="badge-email">0</span>
+    </div>
+    <div class="nav-item" onclick="showPage('deals')" id="nav-deals">
+      <span class="nav-icon">⚖</span> Deal Tracker
+    </div>
+
+    <div class="sidebar-section-label">System</div>
+    <div class="nav-item" onclick="showPage('settings')" id="nav-settings">
+      <span class="nav-icon">⚙</span> Settings
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main" id="main"></main>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal" id="modalBox">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Add Item</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer" id="modalFooter"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  DATA LAYER — localStorage backed, zero EEC data hardcoded
+// ═══════════════════════════════════════════════════════════
+const DB = {
+  get(key) { try { return JSON.parse(localStorage.getItem('eec_' + key) || 'null'); } catch { return null; } },
+  set(key, val) { localStorage.setItem('eec_' + key, JSON.stringify(val)); },
+  todos()   { return this.get('todos')   || []; },
+  emails()  { return this.get('emails')  || []; },
+  deals()   { return this.get('deals')   || getDefaultDeals(); },
+  saveTodos(d)  { this.set('todos', d); updateBadges(); },
+  saveEmails(d) { this.set('emails', d); updateBadges(); },
+  saveDeals(d)  { this.set('deals', d); },
+};
+
+function getDefaultDeals() {
+  return [
+    { id: uid(), name: 'Project Vikings (Enel)', status: 'In Diligence', fund: 'Fund I + II', nextMilestone: 'MIPA NWC Close', milestoneDate: '', owner: 'Ryan / Patrick', advisor: 'Akin Gump, NRF', notes: '', color: '#e74c3c' },
+    { id: uid(), name: 'Goshe Platform Sale', status: 'Pre-LOI', fund: 'Fund I', nextMilestone: 'Blocker Analysis', milestoneDate: '', owner: 'Chris W.', advisor: 'Norton Rose', notes: '', color: '#e67e22' },
+    { id: uid(), name: 'Lydian Blocker / Treasury', status: 'Analysis', fund: 'Fund II', nextMilestone: 'Kris Model Due', milestoneDate: '', owner: 'Mike / Kris', advisor: 'ForvisMazars', notes: '', color: '#3498db' },
+    { id: uid(), name: 'Aspen Preferred Equity', status: 'IC Approved', fund: 'Fund II', nextMilestone: 'MIPA Signing', milestoneDate: '', owner: 'Chris M.', advisor: 'Akin Gump', notes: '', color: '#27ae60' },
+    { id: uid(), name: 'Regis T2/T3/T4', status: 'Construction', fund: 'Fund I', nextMilestone: 'LOB Maturities', milestoneDate: '', owner: 'Sarah / Henry', advisor: 'Internal', notes: '', color: '#8e44ad' },
+    { id: uid(), name: 'Bear & Royal Sale', status: 'Marketing', fund: 'Fund I', nextMilestone: 'Buyer Outreach', milestoneDate: '', owner: 'TBD', advisor: 'TBD', notes: '', color: '#16a085' },
+    { id: uid(), name: 'KPMG Tax Restructuring', status: 'Phase 1', fund: 'Both', nextMilestone: 'Blocker Feasibility', milestoneDate: '', owner: 'Mike', advisor: 'Steve H. / Sean S.', notes: 'March 15 deadline', color: '#b79d6d' },
+  ];
+}
+
+// ═══════════════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════════════
+let _uidCtr = Date.now();
+function uid() { return 'id' + (_uidCtr++); }
+
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+function isOverdue(d) {
+  if (!d) return false;
+  return new Date(d + 'T23:59:59') < new Date();
+}
+function daysAgo(d) {
+  const diff = Math.floor((Date.now() - new Date(d)) / 86400000);
+  if (diff === 0) return 'Today';
+  if (diff === 1) return 'Yesterday';
+  return diff + 'd ago';
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function openModal(title, bodyHTML, footerHTML) {
+  document.getElementById('modalTitle').innerHTML = title;
+  document.getElementById('modalBody').innerHTML = bodyHTML;
+  document.getElementById('modalFooter').innerHTML = footerHTML;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('modal')) return;
+  document.getElementById('modal').classList.remove('open');
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ═══════════════════════════════════════════════════════════
+//  ROUTING
+// ═══════════════════════════════════════════════════════════
+let currentPage = 'home';
+function showPage(page) {
+  currentPage = page;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const nav = document.getElementById('nav-' + page);
+  if (nav) nav.classList.add('active');
+  const pages = { home: renderHome, todos: renderTodos, email: renderEmail, deals: renderDeals, settings: renderSettings };
+  document.getElementById('main').innerHTML = '';
+  (pages[page] || renderHome)();
+}
+
+function refresh() { showPage(currentPage); }
+
+// ═══════════════════════════════════════════════════════════
+//  BADGES
+// ═══════════════════════════════════════════════════════════
+function updateBadges() {
+  const openTodos = DB.todos().filter(t => t.status !== 'complete').length;
+  const overdueEmails = DB.emails().filter(e => e.status === 'awaiting').length;
+  document.getElementById('badge-todos').textContent = openTodos;
+  document.getElementById('badge-email').textContent = overdueEmails;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  HOME PAGE
+// ═══════════════════════════════════════════════════════════
+function renderHome() {
+  const todos = DB.todos();
+  const emails = DB.emails();
+  const deals = DB.deals();
+
+  const highTodos = todos.filter(t => t.priority === 'high' && t.status !== 'complete');
+  const actionEmails = emails.filter(e => e.status === 'action');
+  const awaitEmails = emails.filter(e => e.status === 'awaiting');
+  const openTodos = todos.filter(t => t.status !== 'complete');
+  const overdueTodos = todos.filter(t => t.status !== 'complete' && isOverdue(t.dueDate));
+
+  document.getElementById('main').innerHTML = `
+    <div class="page-header">
+      <div>
+        <div class="page-title">Daily Digest</div>
+        <div class="page-subtitle">Good morning — here's your operational snapshot</div>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card red">
+        <div class="stat-label">Action Required</div>
+        <div class="stat-value">${actionEmails.length}</div>
+        <div class="stat-sub">emails need your response</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-label">Awaiting Reply</div>
+        <div class="stat-value">${awaitEmails.length}</div>
+        <div class="stat-sub">you're waiting on others</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label">Open Tasks</div>
+        <div class="stat-value">${openTodos.length}</div>
+        <div class="stat-sub">${overdueTodos.length > 0 ? overdueTodos.length + ' overdue' : 'all on track'}</div>
+      </div>
+      <div class="stat-card gold">
+        <div class="stat-label">Active Deals</div>
+        <div class="stat-value">${deals.length}</div>
+        <div class="stat-sub">workstreams in progress</div>
+      </div>
+    </div>
+
+    <div class="home-cols">
+      <div>
+        <div class="panel section-gap">
+          <div class="panel-header">
+            <div class="panel-title">🔥 High Priority Tasks</div>
+            <button class="btn btn-sm btn-primary" onclick="showPage('todos')">View All</button>
+          </div>
+          <ul class="item-list">
+            ${highTodos.length === 0 ? `<li class="empty-state"><div class="empty-state-icon">✓</div><div class="empty-state-text">No high priority tasks</div></li>` :
+              highTodos.slice(0,5).map(t => `
+              <li class="item">
+                <div class="item-icon red">🔴</div>
+                <div class="item-body">
+                  <div class="item-title">${esc(t.title)}</div>
+                  <div class="item-meta">${esc(t.category)} · ${t.dueDate ? (isOverdue(t.dueDate) ? '<span class="overdue-text">Overdue: ' + fmtDate(t.dueDate) + '</span>' : 'Due: ' + fmtDate(t.dueDate)) : 'No due date'}</div>
+                </div>
+                <div class="item-actions">
+                  <button class="btn btn-sm btn-ghost" onclick="completeTodo('${t.id}')">Done</button>
+                </div>
+              </li>`).join('')}
+          </ul>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">✉ Action Required Emails</div>
+            <button class="btn btn-sm btn-primary" onclick="showPage('email')">View All</button>
+          </div>
+          <ul class="item-list">
+            ${actionEmails.length === 0 ? `<li class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-text">No emails requiring action</div></li>` :
+              actionEmails.slice(0,4).map(e => `
+              <li class="item">
+                <div class="item-icon red">📧</div>
+                <div class="item-body">
+                  <div class="item-title">${esc(e.subject)}</div>
+                  <div class="item-meta">From: ${esc(e.from)} · ${daysAgo(e.date)}</div>
+                </div>
+                <span class="badge red">Action</span>
+              </li>`).join('')}
+          </ul>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel section-gap">
+          <div class="panel-header">
+            <div class="panel-title">⚖ Active Deals</div>
+            <button class="btn btn-sm btn-primary" onclick="showPage('deals')">View All</button>
+          </div>
+          <ul class="item-list">
+            ${deals.slice(0,6).map(d => `
+            <li class="item" style="padding: 12px 20px;">
+              <div class="deal-dot" style="background:${d.color}; flex-shrink:0; margin-top:2px;"></div>
+              <div class="item-body">
+                <div class="item-title" style="font-size:13px;">${esc(d.name)}</div>
+                <div class="item-meta">${esc(d.status)} · ${esc(d.nextMilestone || '—')}</div>
+              </div>
+              <span class="badge gray">${esc(d.fund)}</span>
+            </li>`).join('')}
+          </ul>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TO-DO PAGE
+// ═══════════════════════════════════════════════════════════
+function renderTodos() {
+  const todos = DB.todos();
+  const cats = ['All', 'Deal', 'Finance', 'Tax', 'Compliance', 'Admin', 'Other'];
+  const priorities = { high: 0, medium: 1, low: 2 };
+  const sorted = [...todos].sort((a, b) => {
+    if (a.status === 'complete' && b.status !== 'complete') return 1;
+    if (b.status === 'complete' && a.status !== 'complete') return -1;
+    return (priorities[a.priority] ?? 9) - (priorities[b.priority] ?? 9);
+  });
+
+  document.getElementById('main').innerHTML = `
+    <div class="page-header">
+      <div>
+        <div class="page-title">My To-Do List</div>
+        <div class="page-subtitle">${todos.filter(t => t.status !== 'complete').length} open · ${todos.filter(t => t.status === 'complete').length} complete</div>
+      </div>
+      <button class="btn btn-primary" onclick="addTodoModal()">+ Add Task</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Tasks</div>
+        <div class="flex-gap">
+          <span class="text-sm text-muted">Sorted by priority</span>
+        </div>
+      </div>
+      <div class="panel-body">
+        ${sorted.length === 0 ? `<div class="empty-state"><div class="empty-state-icon">🎉</div><div class="empty-state-text">No tasks yet — add one above</div></div>` : `
+        <table>
+          <thead>
+            <tr>
+              <th style="width:32px"></th>
+              <th>Task</th>
+              <th>Category</th>
+              <th>Priority</th>
+              <th>Due Date</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${sorted.map(t => `
+            <tr style="${t.status === 'complete' ? 'opacity:0.5' : ''}">
+              <td>
+                <label class="checkbox-wrap">
+                  <input type="checkbox" ${t.status === 'complete' ? 'checked' : ''} onchange="toggleTodoDone('${t.id}', this.checked)"/>
+                </label>
+              </td>
+              <td>
+                <div style="font-weight:600; font-size:13px; ${t.status === 'complete' ? 'text-decoration:line-through;' : ''}">${esc(t.title)}</div>
+                ${t.notes ? `<div class="text-sm text-muted" style="margin-top:2px;">${esc(t.notes)}</div>` : ''}
+              </td>
+              <td><span class="badge navy">${esc(t.category)}</span></td>
+              <td>
+                <span class="priority-dot ${t.priority}"></span>
+                <span class="text-sm" style="margin-left:6px; text-transform:capitalize;">${t.priority}</span>
+              </td>
+              <td class="${isOverdue(t.dueDate) && t.status !== 'complete' ? 'overdue-text' : ''}">${fmtDate(t.dueDate)}</td>
+              <td>
+                <select class="status-select ${t.status.replace('_','-')}" onchange="changeTodoStatus('${t.id}', this.value)">
+                  <option value="open" ${t.status==='open'?'selected':''}>Open</option>
+                  <option value="in-progress" ${t.status==='in-progress'?'selected':''}>In Progress</option>
+                  <option value="blocked" ${t.status==='blocked'?'selected':''}>Blocked</option>
+                  <option value="complete" ${t.status==='complete'?'selected':''}>Complete</option>
+                </select>
+              </td>
+              <td>
+                <div class="flex-gap">
+                  <button class="btn btn-sm btn-ghost" onclick="editTodoModal('${t.id}')">Edit</button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteTodo('${t.id}')">✕</button>
+                </div>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`}
+      </div>
+    </div>
+  `;
+}
+
+function addTodoModal() {
+  openModal('Add Task', `
+    <div class="form-group"><label class="form-label">Task Title *</label><input class="form-input" id="t-title" placeholder="What needs to be done?"/></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Priority</label>
+        <select class="form-select" id="t-pri">
+          <option value="high">🔴 High</option>
+          <option value="medium" selected>🟠 Medium</option>
+          <option value="low">🟢 Low</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Category</label>
+        <select class="form-select" id="t-cat">
+          <option>Deal</option><option>Finance</option><option>Tax</option><option>Compliance</option><option>Admin</option><option>Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Due Date</label><input class="form-input" type="date" id="t-due"/></div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="t-notes" placeholder="Optional notes…"></textarea></div>
+  `, `
+    <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveTodo()">Add Task</button>
+  `);
+  setTimeout(() => document.getElementById('t-title').focus(), 100);
+}
+
+function editTodoModal(id) {
+  const todos = DB.todos();
+  const t = todos.find(x => x.id === id);
+  if (!t) return;
+  openModal('Edit Task', `
+    <div class="form-group"><label class="form-label">Task Title *</label><input class="form-input" id="t-title" value="${esc(t.title)}"/></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Priority</label>
+        <select class="form-select" id="t-pri">
+          <option value="high" ${t.priority==='high'?'selected':''}>🔴 High</option>
+          <option value="medium" ${t.priority==='medium'?'selected':''}>🟠 Medium</option>
+          <option value="low" ${t.priority==='low'?'selected':''}>🟢 Low</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Category</label>
+        <select class="form-select" id="t-cat">
+          ${['Deal','Finance','Tax','Compliance','Admin','Other'].map(c => `<option ${t.category===c?'selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Due Date</label><input class="form-input" type="date" id="t-due" value="${t.dueDate||''}"/></div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="t-notes">${esc(t.notes||'')}</textarea></div>
+  `, `
+    <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveTodo('${id}')">Save Changes</button>
+  `);
+}
+
+function saveTodo(editId) {
+  const title = document.getElementById('t-title').value.trim();
+  if (!title) { toast('Please enter a task title'); return; }
+  const todos = DB.todos();
+  if (editId) {
+    const idx = todos.findIndex(t => t.id === editId);
+    if (idx >= 0) Object.assign(todos[idx], { title, priority: document.getElementById('t-pri').value, category: document.getElementById('t-cat').value, dueDate: document.getElementById('t-due').value, notes: document.getElementById('t-notes').value });
+    toast('Task updated');
+  } else {
+    todos.push({ id: uid(), title, priority: document.getElementById('t-pri').value, category: document.getElementById('t-cat').value, dueDate: document.getElementById('t-due').value, notes: document.getElementById('t-notes').value, status: 'open', createdAt: new Date().toISOString() });
+    toast('Task added');
+  }
+  DB.saveTodos(todos);
+  closeModal();
+  refresh();
+}
+
+function deleteTodo(id) {
+  const todos = DB.todos().filter(t => t.id !== id);
+  DB.saveTodos(todos);
+  toast('Task deleted');
+  refresh();
+}
+
+function completeTodo(id) {
+  const todos = DB.todos();
+  const t = todos.find(x => x.id === id);
+  if (t) t.status = 'complete';
+  DB.saveTodos(todos);
+  refresh();
+}
+
+function toggleTodoDone(id, done) {
+  const todos = DB.todos();
+  const t = todos.find(x => x.id === id);
+  if (t) t.status = done ? 'complete' : 'open';
+  DB.saveTodos(todos);
+  updateBadges();
+  setTimeout(refresh, 300);
+}
+
+function changeTodoStatus(id, val) {
+  const todos = DB.todos();
+  const t = todos.find(x => x.id === id);
+  if (t) t.status = val;
+  DB.saveTodos(todos);
+  updateBadges();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  EMAIL FOLLOW-UP PAGE
+// ═══════════════════════════════════════════════════════════
+function renderEmail() {
+  const emails = DB.emails();
+  const action = emails.filter(e => e.status === 'action');
+  const awaiting = emails.filter(e => e.status === 'awaiting');
+  const fyi = emails.filter(e => e.status === 'fyi');
+
+  document.getElementById('main').innerHTML = `
+    <div class="page-header">
+      <div>
+        <div class="page-title">Email Follow-Ups</div>
+        <div class="page-subtitle">${action.length} action required · ${awaiting.length} awaiting reply</div>
+      </div>
+      <button class="btn btn-primary" onclick="addEmailModal()">+ Log Email</button>
+    </div>
+
+    <div class="stats-row" style="grid-template-columns: repeat(3, 1fr);">
+      <div class="stat-card red">
+        <div class="stat-label">Action Required</div>
+        <div class="stat-value">${action.length}</div>
+        <div class="stat-sub">you need to respond</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-label">Awaiting Reply</div>
+        <div class="stat-value">${awaiting.length}</div>
+        <div class="stat-sub">you're waiting on others</div>
+      </div>
+      <div class="stat-card gray">
+        <div class="stat-label">FYI / Read</div>
+        <div class="stat-value">${fyi.length}</div>
+        <div class="stat-sub">informational</div>
+      </div>
+    </div>
+
+    <div class="panel section-gap">
+      <div class="panel-header"><div class="panel-title">🔴 Action Required</div></div>
+      ${renderEmailList(action, 'red')}
+    </div>
+
+    <div class="panel section-gap">
+      <div class="panel-header"><div class="panel-title">🟠 Awaiting Your Reply</div></div>
+      ${renderEmailList(awaiting, 'orange')}
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><div class="panel-title">📋 FYI / Informational</div></div>
+      ${renderEmailList(fyi, 'gray')}
+    </div>
+  `;
+}
+
+function renderEmailList(emails, color) {
+  if (emails.length === 0) return `<div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-text">Nothing here</div></div>`;
+  return `<ul class="item-list">${emails.map(e => `
+    <li class="item">
+      <div class="item-icon ${color}">✉</div>
+      <div class="item-body">
+        <div class="item-title">${esc(e.subject)}</div>
+        <div class="item-meta">
+          ${e.status === 'action' ? 'From: ' + esc(e.from) : 'To: ' + esc(e.to || e.from)} · ${daysAgo(e.date)}
+          ${e.deal ? ' · <span class="badge gold">' + esc(e.deal) + '</span>' : ''}
+        </div>
+        ${e.notes ? `<div class="text-sm text-muted" style="margin-top:4px;">${esc(e.notes)}</div>` : ''}
+      </div>
+      <div class="item-actions">
+        <button class="btn btn-sm btn-ghost" onclick="resolveEmail('${e.id}')">Resolve</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteEmail('${e.id}')">✕</button>
+      </div>
+    </li>`).join('')}</ul>`;
+}
+
+function addEmailModal() {
+  openModal('Log Email Thread', `
+    <div class="form-group"><label class="form-label">Subject *</label><input class="form-input" id="e-subj" placeholder="Email subject…"/></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Status</label>
+        <select class="form-select" id="e-status">
+          <option value="action">🔴 Action Required (I need to respond)</option>
+          <option value="awaiting">🟠 Awaiting Reply (I sent, waiting on them)</option>
+          <option value="fyi">📋 FYI / Informational</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Date</label><input class="form-input" type="date" id="e-date" value="${new Date().toISOString().split('T')[0]}"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">From / To</label><input class="form-input" id="e-from" placeholder="Name or email…"/></div>
+      <div class="form-group"><label class="form-label">Related Deal</label>
+        <select class="form-select" id="e-deal">
+          <option value="">— None —</option>
+          ${DB.deals().map(d => `<option value="${esc(d.name)}">${esc(d.name)}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Notes / Context</label><textarea class="form-textarea" id="e-notes" placeholder="What's the ask or context?"></textarea></div>
+  `, `
+    <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveEmail()">Log Email</button>
+  `);
+  setTimeout(() => document.getElementById('e-subj').focus(), 100);
+}
+
+function saveEmail() {
+  const subj = document.getElementById('e-subj').value.trim();
+  if (!subj) { toast('Please enter a subject'); return; }
+  const emails = DB.emails();
+  emails.push({
+    id: uid(),
+    subject: subj,
+    status: document.getElementById('e-status').value,
+    date: document.getElementById('e-date').value,
+    from: document.getElementById('e-from').value,
+    deal: document.getElementById('e-deal').value,
+    notes: document.getElementById('e-notes').value,
+  });
+  DB.saveEmails(emails);
+  toast('Email thread logged');
+  closeModal();
+  refresh();
+}
+
+function resolveEmail(id) {
+  const emails = DB.emails().filter(e => e.id !== id);
+  DB.saveEmails(emails);
+  toast('Email resolved');
+  refresh();
+}
+function deleteEmail(id) {
+  const emails = DB.emails().filter(e => e.id !== id);
+  DB.saveEmails(emails);
+  toast('Removed');
+  refresh();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DEAL TRACKER PAGE
+// ═══════════════════════════════════════════════════════════
+const statusColors = {
+  'In Diligence': '#e74c3c', 'Pre-LOI': '#e67e22', 'IC Approved': '#27ae60',
+  'Construction': '#8e44ad', 'Marketing': '#16a085', 'Analysis': '#3498db',
+  'Phase 1': '#b79d6d', 'Closed': '#95a5a6', 'On Hold': '#7f8c8d'
+};
+
+function renderDeals() {
+  const deals = DB.deals();
+  document.getElementById('main').innerHTML = `
+    <div class="page-header">
+      <div>
+        <div class="page-title">Deal Tracker</div>
+        <div class="page-subtitle">${deals.length} active workstreams across Fund I and Fund II</div>
+      </div>
+      <button class="btn btn-primary" onclick="addDealModal()">+ Add Deal</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><div class="panel-title">Active Workstreams</div></div>
+      <table>
+        <thead>
+          <tr>
+            <th>Deal / Workstream</th>
+            <th>Status</th>
+            <th>Fund</th>
+            <th>Next Milestone</th>
+            <th>Milestone Date</th>
+            <th>Owner</th>
+            <th>Advisor</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${deals.map(d => `
+          <tr>
+            <td>
+              <div class="deal-row-status">
+                <div class="deal-dot" style="background:${d.color || '#ccc'}"></div>
+                <span style="font-weight:600;">${esc(d.name)}</span>
+              </div>
+              ${d.notes ? `<div class="text-sm text-muted" style="margin-top:2px; padding-left:16px;">${esc(d.notes)}</div>` : ''}
+            </td>
+            <td><span class="badge" style="background:${(statusColors[d.status]||'#ccc')}22; color:${statusColors[d.status]||'#666'}">${esc(d.status)}</span></td>
+            <td><span class="badge navy">${esc(d.fund)}</span></td>
+            <td>${esc(d.nextMilestone || '—')}</td>
+            <td class="${isOverdue(d.milestoneDate) ? 'overdue-text' : ''}">${fmtDate(d.milestoneDate)}</td>
+            <td class="text-sm">${esc(d.owner || '—')}</td>
+            <td class="text-sm text-muted">${esc(d.advisor || '—')}</td>
+            <td>
+              <div class="flex-gap">
+                <button class="btn btn-sm btn-ghost" onclick="editDealModal('${d.id}')">Edit</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteDeal('${d.id}')">✕</button>
+              </div>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function dealModalForm(d) {
+  return `
+    <div class="form-group"><label class="form-label">Deal / Workstream Name *</label><input class="form-input" id="d-name" value="${esc(d.name||'')}"/></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Status</label>
+        <select class="form-select" id="d-status">
+          ${['In Diligence','Pre-LOI','IC Approved','Construction','Marketing','Analysis','Phase 1','Closed','On Hold'].map(s => `<option ${d.status===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Fund</label>
+        <select class="form-select" id="d-fund">
+          ${['Fund I','Fund II','Both','Fund I + II'].map(f => `<option ${d.fund===f?'selected':''}>${f}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Next Milestone</label><input class="form-input" id="d-ms" value="${esc(d.nextMilestone||'')}"/></div>
+      <div class="form-group"><label class="form-label">Milestone Date</label><input class="form-input" type="date" id="d-msd" value="${d.milestoneDate||''}"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Owner</label><input class="form-input" id="d-owner" value="${esc(d.owner||'')}"/></div>
+      <div class="form-group"><label class="form-label">Advisor</label><input class="form-input" id="d-advisor" value="${esc(d.advisor||'')}"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="d-notes">${esc(d.notes||'')}</textarea></div>
+  `;
+}
+
+function addDealModal() {
+  openModal('Add Deal / Workstream', dealModalForm({}), `
+    <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveDeal()">Add Deal</button>
+  `);
+}
+function editDealModal(id) {
+  const d = DB.deals().find(x => x.id === id);
+  if (!d) return;
+  openModal('Edit Deal', dealModalForm(d), `
+    <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveDeal('${id}')">Save Changes</button>
+  `);
+}
+function saveDeal(editId) {
+  const name = document.getElementById('d-name').value.trim();
+  if (!name) { toast('Please enter a deal name'); return; }
+  const status = document.getElementById('d-status').value;
+  const deals = DB.deals();
+  if (editId) {
+    const idx = deals.findIndex(d => d.id === editId);
+    if (idx >= 0) Object.assign(deals[idx], { name, status, fund: document.getElementById('d-fund').value, nextMilestone: document.getElementById('d-ms').value, milestoneDate: document.getElementById('d-msd').value, owner: document.getElementById('d-owner').value, advisor: document.getElementById('d-advisor').value, notes: document.getElementById('d-notes').value, color: statusColors[status] || '#3498db' });
+    toast('Deal updated');
+  } else {
+    deals.push({ id: uid(), name, status, fund: document.getElementById('d-fund').value, nextMilestone: document.getElementById('d-ms').value, milestoneDate: document.getElementById('d-msd').value, owner: document.getElementById('d-owner').value, advisor: document.getElementById('d-advisor').value, notes: document.getElementById('d-notes').value, color: statusColors[status] || '#3498db' });
+    toast('Deal added');
+  }
+  DB.saveDeals(deals);
+  closeModal();
+  refresh();
+}
+function deleteDeal(id) {
+  if (!confirm('Remove this deal from the tracker?')) return;
+  DB.saveDeals(DB.deals().filter(d => d.id !== id));
+  toast('Deal removed');
+  refresh();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SETTINGS PAGE
+// ═══════════════════════════════════════════════════════════
+function renderSettings() {
+  document.getElementById('main').innerHTML = `
+    <div class="page-header">
+      <div><div class="page-title">Settings</div><div class="page-subtitle">Configure your dashboard preferences</div></div>
+    </div>
+
+    <div class="panel mb-6">
+      <div class="panel-header"><div class="panel-title">Data Management</div></div>
+      <div style="padding: 24px;">
+        <p style="font-size:14px; color: var(--gray-600); margin-bottom:16px;">All data is stored locally in your browser. Nothing is sent to any server.</p>
+        <div class="flex-gap">
+          <button class="btn btn-ghost" onclick="exportData()">⬇ Export Data (JSON)</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('importFile').click()">⬆ Import Data</button>
+          <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)"/>
+          <button class="btn btn-danger" onclick="clearAllData()">🗑 Clear All Data</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><div class="panel-title">About</div></div>
+      <div style="padding: 24px; font-size:14px; color: var(--gray-600); line-height:1.7;">
+        <p><strong style="color:var(--navy)">EEC CFO Operations Dashboard</strong></p>
+        <p>Version 1.0 · Built for Mike Lang, CFO</p>
+        <p style="margin-top:8px;">Modules: Daily Digest · To-Do List · Email Follow-Up Tracker · Deal Tracker</p>
+        <p style="margin-top:8px; font-size:12px;">Hosted via GitHub Pages · Data stored in browser localStorage · No external servers</p>
+      </div>
+    </div>
+  `;
+}
+
+function exportData() {
+  const data = { todos: DB.todos(), emails: DB.emails(), deals: DB.deals(), exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'eec-dashboard-backup-' + new Date().toISOString().split('T')[0] + '.json';
+  a.click();
+  toast('Data exported');
+}
+
+function importData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.todos) DB.saveTodos(data.todos);
+      if (data.emails) DB.saveEmails(data.emails);
+      if (data.deals) DB.saveDeals(data.deals);
+      toast('Data imported successfully');
+      refresh();
+    } catch { toast('Error: invalid file format'); }
+  };
+  reader.readAsText(file);
+}
+
+function clearAllData() {
+  if (!confirm('This will permanently delete all tasks, emails, and deal data. Are you sure?')) return;
+  ['todos','emails','deals'].forEach(k => localStorage.removeItem('eec_' + k));
+  toast('All data cleared');
+  refresh();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+document.getElementById('headerDate').textContent = new Date().toLocaleDateString('en-US', { weekday:'short', month:'long', day:'numeric', year:'numeric' });
+updateBadges();
+showPage('home');
+</script>
+</body>
+</html>
