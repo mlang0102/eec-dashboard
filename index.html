@@ -403,6 +403,93 @@
   .mb-4 { margin-bottom: 16px; }
   .mb-6 { margin-bottom: 24px; }
   .fw-700 { font-weight: 700; }
+
+  /* ── INTERCOMPANY MATRIX ─────────────────────────────── */
+  .matrix-wrap { overflow-x: auto; }
+  .matrix-tbl { border-collapse: collapse; min-width: 640px; width: 100%; }
+  .matrix-tbl th, .matrix-tbl td {
+    padding: 11px 16px;
+    border: 1px solid var(--gray-200);
+    font-size: 13px;
+  }
+  .matrix-tbl thead th {
+    background: var(--navy);
+    color: white;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: center;
+    border-color: #1e3a5f;
+    white-space: nowrap;
+  }
+  .matrix-tbl thead th:first-child {
+    text-align: left;
+    background: var(--navy-mid);
+    min-width: 160px;
+  }
+  .matrix-tbl thead th.net-col { background: #0a1826; }
+  .matrix-tbl tbody th {
+    background: var(--gray-50);
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--navy);
+    border-color: var(--gray-200);
+    white-space: nowrap;
+    text-align: left;
+  }
+  .matrix-tbl tbody td {
+    text-align: right;
+    font-family: 'DM Mono', monospace;
+    min-width: 120px;
+  }
+  .matrix-tbl tfoot th {
+    background: var(--navy-mid);
+    color: white;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .matrix-tbl tfoot td {
+    text-align: right;
+    font-family: 'DM Mono', monospace;
+    font-weight: 700;
+    background: var(--gray-50);
+  }
+  .matrix-self { background: #f0f2f5 !important; color: var(--gray-400); text-align: center !important; }
+  .matrix-pos { color: var(--green); }
+  .matrix-neg { color: var(--red); }
+  .matrix-zero { color: var(--gray-400); }
+  .matrix-net { font-weight: 700; border-left: 2px solid var(--gray-300) !important; }
+  .api-warn {
+    background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px;
+    padding: 12px 16px; font-size: 13px; color: #92400e; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .api-status-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 16px; background: var(--gray-50);
+    border-radius: 8px; margin-bottom: 20px;
+    font-size: 12px; border: 1px solid var(--gray-200);
+  }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .status-dot.live { background: var(--green); }
+  .status-dot.demo { background: var(--orange); }
+  .status-dot.none { background: var(--gray-400); }
+  .spinner {
+    display: inline-block; width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.3); border-top-color: white;
+    border-radius: 50%; animation: spin 0.65s linear infinite;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .matrix-legend {
+    display: flex; gap: 20px; font-size: 11px; color: var(--gray-600);
+    padding: 10px 16px; border-top: 1px solid var(--gray-200);
+    background: var(--gray-50);
+  }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
 </style>
 </head>
 <body>
@@ -433,6 +520,11 @@
     </div>
     <div class="nav-item" onclick="showPage('deals')" id="nav-deals">
       <span class="nav-icon">⚖</span> Deal Tracker
+    </div>
+
+    <div class="sidebar-section-label">Finance</div>
+    <div class="nav-item" onclick="showPage('interco')" id="nav-interco">
+      <span class="nav-icon">⇄</span> Intercompany
     </div>
 
     <div class="sidebar-section-label">System</div>
@@ -467,12 +559,16 @@
 const DB = {
   get(key) { try { return JSON.parse(localStorage.getItem('eec_' + key) || 'null'); } catch { return null; } },
   set(key, val) { localStorage.setItem('eec_' + key, JSON.stringify(val)); },
-  todos()   { return this.get('todos')   || []; },
-  emails()  { return this.get('emails')  || []; },
-  deals()   { return this.get('deals')   || getDefaultDeals(); },
-  saveTodos(d)  { this.set('todos', d); updateBadges(); },
-  saveEmails(d) { this.set('emails', d); updateBadges(); },
-  saveDeals(d)  { this.set('deals', d); },
+  todos()        { return this.get('todos')      || []; },
+  emails()       { return this.get('emails')     || []; },
+  deals()        { return this.get('deals')      || getDefaultDeals(); },
+  sageConfig()   { return this.get('sageConfig') || {}; },
+  intercoData()  { return this.get('intercoData') || null; },
+  saveTodos(d)       { this.set('todos', d); updateBadges(); },
+  saveEmails(d)      { this.set('emails', d); updateBadges(); },
+  saveDeals(d)       { this.set('deals', d); },
+  saveSageConfig(d)  { this.set('sageConfig', d); },
+  saveIntercoData(d) { this.set('intercoData', d); },
 };
 
 function getDefaultDeals() {
@@ -538,7 +634,7 @@ function showPage(page) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const nav = document.getElementById('nav-' + page);
   if (nav) nav.classList.add('active');
-  const pages = { home: renderHome, todos: renderTodos, email: renderEmail, deals: renderDeals, settings: renderSettings };
+  const pages = { home: renderHome, todos: renderTodos, email: renderEmail, deals: renderDeals, interco: renderIntercompany, settings: renderSettings };
   document.getElementById('main').innerHTML = '';
   (pages[page] || renderHome)();
 }
@@ -1182,6 +1278,416 @@ function clearAllData() {
   ['todos','emails','deals'].forEach(k => localStorage.removeItem('eec_' + k));
   toast('All data cleared');
   refresh();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INTERCOMPANY BALANCES
+// ═══════════════════════════════════════════════════════════
+
+const INTERCO_ENTITIES = [
+  { name: 'Regis T1 LLC', short: 'T1' },
+  { name: 'Regis T2 LLC', short: 'T2' },
+  { name: 'Regis T3 LLC', short: 'T3' },
+  { name: 'Regis T4 LLC', short: 'T4' },
+];
+
+const INTERCO_AS_OF = '2026-03-31';
+const INTERCO_AS_OF_LABEL = 'March 31, 2026';
+
+function renderIntercompany() {
+  const cfg = DB.sageConfig();
+  const data = DB.intercoData();
+  const isConfigured = !!(cfg && cfg.senderId && cfg.companyId && cfg.userId);
+
+  document.getElementById('main').innerHTML = `
+    <div class="page-header">
+      <div>
+        <div class="page-title">Intercompany Balances</div>
+        <div class="page-subtitle">Regis T1 – T4 LLC · As of ${INTERCO_AS_OF_LABEL}</div>
+      </div>
+      <div class="flex-gap">
+        <button class="btn btn-ghost" onclick="openSageConfigModal()">⚙ Sage API Settings</button>
+        <button class="btn btn-primary" id="fetch-btn" onclick="fetchIntercoBalances()">
+          ↻ Fetch from Sage
+        </button>
+      </div>
+    </div>
+
+    ${!isConfigured ? `
+    <div class="api-warn">
+      <span>⚠ Sage API credentials not configured.</span>
+      <button class="btn btn-sm btn-ghost" onclick="openSageConfigModal()">Configure Now</button>
+      <button class="btn btn-sm btn-ghost" onclick="loadDemoIntercoData()">Load Demo Data</button>
+    </div>` : `
+    <div class="api-status-bar">
+      <div class="status-dot ${data ? (data.source === 'live' ? 'live' : 'demo') : 'none'}"></div>
+      <span style="font-weight:600; color:var(--navy);">${
+        data
+          ? (data.source === 'live' ? 'Live Sage data' : 'Demo data')
+          : 'Not yet fetched'
+      }</span>
+      ${data ? `<span class="text-muted">· Last updated ${new Date(data.fetchedAt).toLocaleString()}</span>` : ''}
+      <span style="margin-left:auto; color:var(--gray-400);">Company: ${esc(cfg.companyId)}</span>
+    </div>`}
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Balance Matrix · As of ${INTERCO_AS_OF_LABEL}</div>
+        <div class="text-sm text-muted" style="font-style:italic;">
+          Row entity = source · Column entity = counterpart
+        </div>
+      </div>
+      <div id="matrix-body">
+        ${data ? buildMatrixHTML(data) : `
+        <div class="empty-state" style="padding:60px 24px;">
+          <div class="empty-state-icon">⇄</div>
+          <div class="empty-state-text">No data — configure Sage API and click Fetch, or load demo data</div>
+        </div>`}
+      </div>
+      ${data ? `
+      <div class="matrix-legend">
+        <span><span class="legend-dot" style="background:var(--green);"></span>Positive = net receivable (owed to row entity)</span>
+        <span><span class="legend-dot" style="background:var(--red);"></span>Negative / (brackets) = net payable (row entity owes)</span>
+        <span><span class="legend-dot" style="background:var(--gray-400);"></span>$— = no balance</span>
+      </div>` : ''}
+    </div>
+
+    ${data && data.source === 'live' && data.rawCount != null ? `
+    <div class="text-sm text-muted" style="margin-top:12px; padding:0 4px;">
+      ${data.rawCount} GL balance record(s) retrieved from Sage Intacct.
+    </div>` : ''}
+  `;
+}
+
+function buildMatrixHTML(data) {
+  const entities = INTERCO_ENTITIES;
+  const matrix = data.matrix || {};
+
+  const colHeaders = entities.map(e =>
+    `<th title="${esc(e.name)}">${esc(e.short)}<br><span style="font-size:9px;font-weight:400;opacity:0.75;">(owes)</span></th>`
+  ).join('') + `<th class="net-col">Net Position</th>`;
+
+  const rows = entities.map(fromE => {
+    const cells = entities.map(toE => {
+      if (fromE.name === toE.name) return `<td class="matrix-self">—</td>`;
+      const amt = (matrix[fromE.name] && matrix[fromE.name][toE.name] != null)
+        ? matrix[fromE.name][toE.name] : null;
+      const cls = amt == null || amt === 0 ? 'matrix-zero' : amt > 0 ? 'matrix-pos' : 'matrix-neg';
+      return `<td class="${cls}">${formatCurrency(amt)}</td>`;
+    }).join('');
+
+    const net = entities.reduce((s, toE) => {
+      if (toE.name === fromE.name) return s;
+      const v = matrix[fromE.name] && matrix[fromE.name][toE.name];
+      return s + (v || 0);
+    }, 0);
+    const netCls = net > 0 ? 'matrix-pos' : net < 0 ? 'matrix-neg' : 'matrix-zero';
+
+    return `<tr>
+      <th>${esc(fromE.name)}<br><span style="font-weight:400;font-size:11px;color:var(--gray-400);">(is owed)</span></th>
+      ${cells}
+      <td class="${netCls} matrix-net">${formatCurrency(net)}</td>
+    </tr>`;
+  }).join('');
+
+  const colTotals = entities.map(toE => {
+    const total = entities.reduce((s, fromE) => {
+      if (fromE.name === toE.name) return s;
+      const v = matrix[fromE.name] && matrix[fromE.name][toE.name];
+      return s + (v || 0);
+    }, 0);
+    const cls = total > 0 ? 'matrix-pos' : total < 0 ? 'matrix-neg' : 'matrix-zero';
+    return `<td class="${cls}">${formatCurrency(total)}</td>`;
+  }).join('') + `<td style="background:var(--gray-100);"></td>`;
+
+  return `
+  <div class="matrix-wrap">
+    <table class="matrix-tbl">
+      <thead>
+        <tr>
+          <th></th>
+          ${colHeaders}
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+      <tfoot>
+        <tr>
+          <th>Column Total</th>
+          ${colTotals}
+        </tr>
+      </tfoot>
+    </table>
+  </div>`;
+}
+
+function formatCurrency(v) {
+  if (v == null || v === 0) return '$—';
+  const abs = Math.abs(v);
+  const fmt = abs >= 1000000
+    ? '$' + (abs / 1000000).toFixed(2) + 'M'
+    : '$' + abs.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  return v < 0 ? '(' + fmt + ')' : fmt;
+}
+
+function loadDemoIntercoData() {
+  const data = {
+    asOfDate: INTERCO_AS_OF,
+    fetchedAt: new Date().toISOString(),
+    source: 'demo',
+    matrix: {
+      'Regis T1 LLC': { 'Regis T2 LLC': 1250000,  'Regis T3 LLC': 875000,   'Regis T4 LLC': 0       },
+      'Regis T2 LLC': { 'Regis T1 LLC': -1250000,  'Regis T3 LLC': 325000,   'Regis T4 LLC': 450000  },
+      'Regis T3 LLC': { 'Regis T1 LLC': -875000,   'Regis T2 LLC': -325000,  'Regis T4 LLC': 200000  },
+      'Regis T4 LLC': { 'Regis T1 LLC': 0,          'Regis T2 LLC': -450000,  'Regis T3 LLC': -200000 },
+    },
+  };
+  DB.saveIntercoData(data);
+  toast('Demo data loaded');
+  refresh();
+}
+
+function openSageConfigModal() {
+  const cfg = DB.sageConfig();
+  openModal('Sage Intacct API Configuration', `
+    <div class="api-warn" style="margin-bottom:16px; font-size:12px;">
+      Credentials are stored in your browser only (localStorage) and never sent to any external server other than Sage Intacct.
+    </div>
+    <div class="form-group">
+      <label class="form-label">API Endpoint</label>
+      <input class="form-input" id="sg-endpoint" value="${esc(cfg.endpoint || 'https://api.intacct.com/ia/xml/xmlgw.phtml')}"/>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Sender ID</label>
+        <input class="form-input" id="sg-sender" value="${esc(cfg.senderId || '')}" placeholder="Sage-issued Sender ID"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sender Password</label>
+        <input class="form-input" type="password" id="sg-senderPw" value="${esc(cfg.senderPassword || '')}"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Company ID</label>
+        <input class="form-input" id="sg-company" value="${esc(cfg.companyId || '')}" placeholder="Sage company ID"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">User ID</label>
+        <input class="form-input" id="sg-user" value="${esc(cfg.userId || '')}" placeholder="Sage user login"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">User Password</label>
+      <input class="form-input" type="password" id="sg-userPw" value="${esc(cfg.userPassword || '')}"/>
+    </div>
+    <div style="margin-top:4px; border-top:1px solid var(--gray-200); padding-top:14px;">
+      <div class="form-label" style="margin-bottom:10px;">Sage Location ID per Entity</div>
+      ${INTERCO_ENTITIES.map(e => `
+      <div class="form-row" style="margin-bottom:8px; align-items:center;">
+        <div style="padding:9px 12px; background:var(--gray-50); border-radius:8px; font-size:13px; font-weight:600; color:var(--navy);">${esc(e.name)}</div>
+        <input class="form-input" id="sg-loc-${esc(e.short)}" placeholder="Location ID" value="${esc((cfg.locations && cfg.locations[e.name]) || e.short)}"/>
+      </div>`).join('')}
+    </div>
+    <div class="form-group" style="margin-top:4px;">
+      <label class="form-label">Intercompany GL Account Numbers <span class="text-muted">(comma-separated)</span></label>
+      <input class="form-input" id="sg-accounts" value="${esc((cfg.intercoAccounts || []).join(', '))}" placeholder="e.g. 1300, 1301, 2100, 2101"/>
+      <div class="text-sm text-muted" style="margin-top:4px;">Due to / Due from Affiliate accounts in your chart of accounts</div>
+    </div>
+  `, `
+    <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveSageConfig()">Save</button>
+  `);
+}
+
+function saveSageConfig() {
+  const locations = {};
+  INTERCO_ENTITIES.forEach(e => {
+    const el = document.getElementById('sg-loc-' + e.short);
+    locations[e.name] = el ? el.value.trim() || e.short : e.short;
+  });
+  const acctRaw = document.getElementById('sg-accounts')?.value || '';
+  const intercoAccounts = acctRaw.split(',').map(s => s.trim()).filter(Boolean);
+
+  DB.saveSageConfig({
+    endpoint:       document.getElementById('sg-endpoint').value.trim(),
+    senderId:       document.getElementById('sg-sender').value.trim(),
+    senderPassword: document.getElementById('sg-senderPw').value,
+    companyId:      document.getElementById('sg-company').value.trim(),
+    userId:         document.getElementById('sg-user').value.trim(),
+    userPassword:   document.getElementById('sg-userPw').value,
+    locations,
+    intercoAccounts,
+  });
+  toast('Sage API configuration saved');
+  closeModal();
+  refresh();
+}
+
+// ── Sage Intacct XML helpers ─────────────────────────────
+function xmlEsc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+function sageControlBlock(cfg, controlId) {
+  return `<control><senderid>${xmlEsc(cfg.senderId)}</senderid><password>${xmlEsc(cfg.senderPassword)}</password><controlid>${xmlEsc(controlId)}</controlid><uniqueid>false</uniqueid><dtdversion>3.0</dtdversion><includewhitespace>false</includewhitespace></control>`;
+}
+
+async function sagePost(endpoint, xml) {
+  const resp = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/xml; charset=UTF-8' },
+    body: xml,
+  });
+  if (!resp.ok) throw new Error(`HTTP ${resp.status} ${resp.statusText}`);
+  const text = await resp.text();
+  const doc = new DOMParser().parseFromString(text, 'text/xml');
+  return doc;
+}
+
+function sageCheckStatus(doc, context) {
+  const status = doc.querySelector('operation > result > status')?.textContent
+    || doc.querySelector('result > status')?.textContent
+    || doc.querySelector('response > control > status')?.textContent;
+  if (status && status !== 'success') {
+    const desc = doc.querySelector('errormessage > error > description2')?.textContent
+      || doc.querySelector('errormessage > error > description')?.textContent
+      || doc.querySelector('description2')?.textContent
+      || doc.querySelector('description')?.textContent
+      || `${context} failed`;
+    throw new Error(desc);
+  }
+}
+
+async function sageGetSession(cfg) {
+  const endpoint = cfg.endpoint || 'https://api.intacct.com/ia/xml/xmlgw.phtml';
+  const controlId = 'auth' + Date.now();
+  const xml = `<?xml version="1.0" encoding="UTF-8"?><request>${sageControlBlock(cfg, controlId)}<operation><authentication><login><userid>${xmlEsc(cfg.userId)}</userid><companyid>${xmlEsc(cfg.companyId)}</companyid><password>${xmlEsc(cfg.userPassword)}</password></login></authentication><content><function controlid="sess1"><getAPISession/></function></content></operation></request>`;
+
+  const doc = await sagePost(endpoint, xml);
+  sageCheckStatus(doc, 'Authentication');
+
+  const sessionId = doc.querySelector('sessionid')?.textContent?.trim();
+  const sessionEndpoint = doc.querySelector('endpoint')?.textContent?.trim() || endpoint;
+  if (!sessionId) throw new Error('No session ID returned by Sage');
+  return { sessionId, endpoint: sessionEndpoint };
+}
+
+async function sageQueryGLBalances(session, cfg) {
+  const controlId = 'qbal' + Date.now();
+  const locationIds = INTERCO_ENTITIES.map(e => (cfg.locations && cfg.locations[e.name]) || e.short);
+
+  // Default intercompany accounts if none configured
+  const accounts = (cfg.intercoAccounts && cfg.intercoAccounts.length > 0)
+    ? cfg.intercoAccounts
+    : ['1300', '1301', '1302', '1303', '2100', '2101', '2102', '2103'];
+
+  const locList  = locationIds.map(l => `'${xmlEsc(l)}'`).join(',');
+  const acctList = accounts.map(a => `'${xmlEsc(a)}'`).join(',');
+
+  // Period format for Sage: MM/YYYY
+  const [year, month] = INTERCO_AS_OF.split('-');
+  const periodName = `${month}/${year}`;
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?><request>${sageControlBlock(cfg, controlId)}<operation><authentication><sessionid>${xmlEsc(session.sessionId)}</sessionid></authentication><content><function controlid="q1"><readByQuery><object>GLBALANCE</object><fields>LOCATIONID,ACCOUNTNO,ACCOUNTTITLE,AMOUNT,CURRENCY</fields><query>LOCATIONID IN (${locList}) AND ACCOUNTNO IN (${acctList}) AND PERIODNAME = '${periodName}'</query><pagesize>1000</pagesize></readByQuery></function></content></operation></request>`;
+
+  const doc = await sagePost(session.endpoint, xml);
+  sageCheckStatus(doc, 'GL balance query');
+
+  return [...doc.querySelectorAll('GLBALANCE')].map(r => ({
+    locationId:   r.querySelector('LOCATIONID')?.textContent?.trim(),
+    accountNo:    r.querySelector('ACCOUNTNO')?.textContent?.trim(),
+    accountTitle: r.querySelector('ACCOUNTTITLE')?.textContent?.trim() || '',
+    amount:       parseFloat(r.querySelector('AMOUNT')?.textContent || '0'),
+  }));
+}
+
+function buildIntercoMatrix(glRows, cfg) {
+  // Reverse-lookup: Sage location ID → entity name
+  const locToName = {};
+  INTERCO_ENTITIES.forEach(e => {
+    const loc = (cfg.locations && cfg.locations[e.name]) || e.short;
+    locToName[loc] = e.name;
+  });
+
+  // Initialise zero matrix
+  const matrix = {};
+  INTERCO_ENTITIES.forEach(from => {
+    matrix[from.name] = {};
+    INTERCO_ENTITIES.forEach(to => { if (from.name !== to.name) matrix[from.name][to.name] = 0; });
+  });
+
+  glRows.forEach(row => {
+    const fromName = locToName[row.locationId];
+    if (!fromName) return;
+
+    const title = row.accountTitle.toLowerCase();
+    // Identify counterpart entity from account title (e.g. "Due from T2", "Due to Regis T3")
+    let toName = null;
+    INTERCO_ENTITIES.forEach(e => {
+      if (e.name === fromName) return;
+      if (title.includes(e.short.toLowerCase()) || title.includes(e.name.toLowerCase())) {
+        toName = e.name;
+      }
+    });
+    if (!toName) return;
+
+    // "Due to" / "payable" → liability → we owe them (negative from our perspective)
+    const isDueTo = /due\s+to|payable|ap\s+affiliate/.test(title);
+    const signed = isDueTo ? -Math.abs(row.amount) : Math.abs(row.amount);
+    matrix[fromName][toName] = (matrix[fromName][toName] || 0) + signed;
+  });
+
+  return matrix;
+}
+
+async function fetchIntercoBalances() {
+  const cfg = DB.sageConfig();
+  if (!cfg || !cfg.senderId || !cfg.companyId || !cfg.userId) {
+    toast('Please configure Sage API credentials first');
+    openSageConfigModal();
+    return;
+  }
+
+  const btn = document.getElementById('fetch-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Fetching…'; }
+
+  try {
+    toast('Connecting to Sage Intacct…');
+    const session = await sageGetSession(cfg);
+
+    toast('Querying GL balances…');
+    const glRows = await sageQueryGLBalances(session, cfg);
+
+    const matrix = buildIntercoMatrix(glRows, cfg);
+    DB.saveIntercoData({
+      asOfDate:  INTERCO_AS_OF,
+      fetchedAt: new Date().toISOString(),
+      source:    'live',
+      rawCount:  glRows.length,
+      matrix,
+    });
+    toast(`Balances updated — ${glRows.length} GL records retrieved`);
+    refresh();
+  } catch (err) {
+    console.error('Sage fetch error:', err);
+    let msg = err.message || 'Unknown error';
+    if (/failed to fetch|networkerror|cors/i.test(msg)) {
+      msg = 'Network / CORS error: Sage API cannot be reached directly from the browser. '
+          + 'You may need a server-side proxy or to run the dashboard locally with CORS disabled.';
+    }
+    const mb = document.getElementById('matrix-body');
+    if (mb) mb.innerHTML = `
+      <div style="padding:24px; color:var(--red); font-size:13px; line-height:1.7;">
+        <strong>Fetch failed:</strong><br>${esc(msg)}<br><br>
+        <button class="btn btn-ghost btn-sm" onclick="loadDemoIntercoData()">Load Demo Data Instead</button>
+      </div>`;
+    toast('Sage error — see panel for details');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '↻ Fetch from Sage'; }
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
