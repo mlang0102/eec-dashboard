@@ -1,0 +1,31 @@
+{
+  "asOfDate": "03/31/2026",
+  "entities": {
+    "Regis T1 LLC": "T1",
+    "Regis T2 LLC": "T2",
+    "Regis T3 LLC": "T3",
+    "Regis T4 LLC": "T4"
+  },
+  "accounts": {
+    "Regis T1 LLC": {
+      "1510": "Regis T2 LLC",
+      "1511": "Regis T3 LLC",
+      "1512": "Regis T4 LLC"
+    },
+    "Regis T2 LLC": {
+      "1510": "Regis T1 LLC",
+      "1511": "Regis T3 LLC",
+      "1512": "Regis T4 LLC"
+    },
+    "Regis T3 LLC": {
+      "1510": "Regis T1 LLC",
+      "1511": "Regis T2 LLC",
+      "1512": "Regis T4 LLC"
+    },
+    "Regis T4 LLC": {
+      "1510": "Regis T1 LLC",
+      "1511": "Regis T2 LLC",
+      "1512": "Regis T3 LLC"
+    }
+  }
+}

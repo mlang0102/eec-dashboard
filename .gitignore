@@ -1,0 +1,4 @@
+.env
+config/intercompany.json
+node_modules/
+intercompany-matrix.json
